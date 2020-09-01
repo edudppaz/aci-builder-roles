@@ -21,6 +21,7 @@ This role reads a l2 and l3 vlan list and configures them as EPGs on the ACI fab
 Instructions
 ------------
 Clone the github repo with: git clone https://github.com/edudppaz/aci-builder-roles.git
+
 Run the ansible playbook from the aci-builder-roles folder with: ansible-playbook aci-fabric-playbook.yml -i hosts
 
 Requirements
