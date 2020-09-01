@@ -1,0 +1,8 @@
+---
+# ./vars/topology.yml
+
+leafs:
+    - 101
+    - 102
+vpcs:
+    - 101-102

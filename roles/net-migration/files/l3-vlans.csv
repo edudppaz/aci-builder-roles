@@ -1,0 +1,4 @@
+vlanid,vlanname,dg,mask,vrf
+id10,vlan10,192.168.10.1,24,default
+id20,vlan20,192.168.20.1,24,vrf123
+id30,vlan30,192.186.30.1,24,default

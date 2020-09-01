@@ -1,0 +1,135 @@
+---
+# tasks file for best-practices-check
+## MCP (per vlan)
+#URL: https://$HOST/api/node/mo/uni/infra/mcpInstP-default.xml
+#Payload: '<mcpInstPol adminSt="enabled" annotation="" ctrl="pdu-per-vlan" descr="" dn="uni/infra/mcpInstP-default" initDelayTime="180" loopDetectMult="2" loopProtectAct="port-disable" name="default" nameAlias="" ownerKey="" ownerTag="" txFreq="2" txFreqMsec="0"/>'
+#
+- name: Get MCP status
+  aci_rest:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    method: get
+    path: /api/node/mo/uni/infra/mcpInstP-default.xml
+    validate_certs: no
+  register: mcp_result
+  delegate_to: localhost
+
+## Disable remote EP learn and Subnet Check
+#URL: https://$HOST/api/node/mo/uni/infra/settings.xml
+#Payload: '<infraSetPol enforceSubnetCheck="yes" unicastXrEpLearnDisable="yes"/>'
+
+- name: Get EP learn and Subnet Check status
+  aci_rest:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    method: get
+    path: /api/node/mo/uni/infra/settings.xml
+    validate_certs: no
+  register: eps_result
+  delegate_to: localhost
+
+## EP Loop detection
+#URL: https://$HOST/api/node/mo/uni/infra/epLoopProtectP-default.xml
+#Payload: '<epLoopProtectP action="" adminSt="enabled" annotation="" loopDetectIntvl="60" loopDetectMult="4" />'
+#
+- name: Get EP loop detection status
+  aci_rest:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    method: get
+    path: /api/node/mo/uni/infra/epLoopProtectP-default.xml
+    validate_certs: no
+  register: epl_result
+  delegate_to: localhost
+
+## IP Aging
+#URL: https://$HOST/api/node/mo/uni/infra/ipAgingP-default.xml
+#Payload: '<epIpAgingP adminSt="enabled"/>'
+#
+- name: Get IP Aging status
+  aci_rest:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    method: get
+    path: /api/node/mo/uni/infra/ipAgingP-default.xml
+    validate_certs: no
+  register: ipage_result
+  delegate_to: localhost
+
+## Rogue endpoint detection
+#URL: https://$HOST/api/node/mo/uni/infra/epCtrlP-default.xml
+#Payload: '<epControlP adminSt="enabled" rogueEpDetectIntvl="30" rogueEpDetectMult="6"/>'
+#
+- name: Get Rogue endpoint detection status
+  aci_rest:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    method: get
+    path: /api/node/mo/uni/infra/epCtrlP-default.xml
+    validate_certs: no
+  register: roguep_result
+  delegate_to: localhost
+
+## BFD for Fabric Facing interfaces
+#URL: https://$HOST/api/node/mo/uni/fabric/l3IfP-default.xml
+#Payload: '<l3IfPol bfdIsis="enabled"/>'
+#
+- name: Get Fabric BFD (Spines/Leafs) Status
+  aci_rest:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    method: get
+    path: /api/node/mo/uni/fabric/l3IfP-default.xml
+    validate_certs: no
+  register: bfd_result
+  delegate_to: localhost
+
+## CoS Preservation
+#URL: https://$HOST/api/node/mo/uni/infra/qosinst-default.xml
+#Payload: '<qosInstPol name="default" ctrl="dot1p-preserve"></qosInstPol>'
+#
+- name: Get Fabric CoS preservation Status
+  aci_rest:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    method: get
+    path: /api/node/mo/uni/infra/qosinst-default.xml
+    validate_certs: no
+  register: cos_result
+  delegate_to: localhost
+
+## Port Tracking
+#URL: https://$HOST/api/node/mo/uni/infra/trackEqptFabP-default.xml
+#Payload: '<infraPortTrackPol adminSt="on"/>'
+#
+
+- name: Get Fabric port tracking  Status
+  aci_rest:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    method: get
+    path: /api/node/mo/uni/infra/trackEqptFabP-default.xml
+    validate_certs: no
+  register: track_result
+  delegate_to: localhost
+
+- name: Printing results
+  debug:
+    msg:
+    - MCP Status = {{ mcp_result.imdata[0].mcpInstPol.attributes.adminSt }}
+    - Enforce Subnet = {{ eps_result.imdata[0].infraSetPol.attributes.enforceSubnetCheck }}
+    - EP learning = {{ eps_result.imdata[0].infraSetPol.attributes.unicastXrEpLearnDisable }}
+    - Enforce Loop detection = {{ epl_result.imdata[0].epLoopProtectP.attributes.adminSt }}
+    - IP Aging = {{ ipage_result.imdata[0].epIpAgingP.attributes.adminSt }}
+    - Rogue Endpoint = {{ roguep_result.imdata[0].epControlP.attributes.adminSt }}
+    - Fabric BFD = {{ bfd_result.imdata[0].l3IfPol.attributes.bfdIsis }}
+    - Fabric CoS = {{ cos_result.imdata[0].qosInstPol.attributes.ctrl |default('disabled', true) }}
+    - Port Tracking = {{ track_result.imdata[0].infraPortTrackPol.attributes.adminSt }}

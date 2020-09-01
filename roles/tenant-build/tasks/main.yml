@@ -1,0 +1,21 @@
+---
+- name: Create ACI tenant
+  aci_tenant:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    tenant: "{{ tenant_name }}"
+    description: Tenant - {{ tenant_name}}
+    state: present
+
+- name: Build default VRF for the tenant
+  aci_vrf:
+     hostname: "{{ inventory_hostname }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+     vrf: "{{ tenant_name|upper }}-DEFAULT"
+     tenant: "{{ tenant_name }}"
+     descr: Default VRF for tenant {{ tenant_name|upper }}
+     policy_control_preference: enforced
+     policy_control_direction: ingress
+     state: present

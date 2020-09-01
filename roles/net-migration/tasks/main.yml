@@ -1,0 +1,188 @@
+---
+# tasks file for net-migration
+#Pending: Role could read the VLANs directly from a "Core" switch and make the migration process automatic (without CSV files).
+
+- name: Read L2 Vlans from CSV file
+  read_csv:
+    path: roles/net-migration/files/l2-vlans.csv
+    key: vlanid
+    delimiter: ','
+  register: l2vlans
+
+- name: Read L3 Vlans from CSV file
+  read_csv:
+    path: roles/net-migration/files/l3-vlans.csv
+    key: vlanid
+    delimiter: ','
+  register: l3vlans
+
+#- name: Debug for L2 CSV read
+#  debug:
+#    msg: 'The EPG  and BD is {{ item.value.vlanid }}-{{ item.value.vlanname }}'
+#  loop: "{{ l2vlans.dict | dict2items }}"
+
+#- name: Debug for L3 CSV read
+#  debug:
+#    msg: 'The VRF  is {{ item.value.vrf | default({{ tenant_name }}-DEFAULT, true) }}'
+#  loop: "{{ l3vlans.dict | dict2items }}"
+
+- name: Add L2 AP
+  aci_ap:
+    hostname: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    tenant: "{{ tenant_name }}"
+    ap: L2-LEGACY
+    description: L2 (bridged) VLANs migrated from legacy environment
+    state: present
+
+- name: Add L3 AP
+  aci_ap:
+    hostname: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    tenant: "{{ tenant_name }}"
+    ap: L3-LEGACY
+    description: L3 (routed) VLANs migrated from legacy environment
+    state: present
+
+- name: Creates default VRF for the tenant if it doesnt exists already ("TENANT"-DEFAULT)
+  aci_vrf:
+    hostname: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    vrf: "{{ tenant_name|upper }}-DEFAULT"
+    tenant: "{{ tenant_name }}"
+    descr: Default VRF for tenant {{ tenant_name|upper }}
+    policy_control_preference: enforced
+    policy_control_direction: ingress
+    state: present
+
+- name: Creates other VRFs for the tenant if they dont already exist.
+  aci_vrf:
+    hostname: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    vrf: "{{ item.value.vrf }}"
+    tenant: "{{ tenant_name }}"
+    descr: "{{ item.value.vrf }} VRF for tenant {{ tenant_name }}"
+    policy_control_preference: enforced
+    policy_control_direction: ingress
+    state: present
+  loop: "{{ l3vlans.dict | dict2items }}"
+  when: item.value.vrf != "default"
+      
+- name: Add BDs for L2 EPGs
+  aci_bd:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    tenant: "{{ tenant_name }}"
+    bd: "{{ item.value.vlanid }}-{{ item.value.vlanname }}"
+    enable_routing: no
+    endpoint_move_detect: garp
+    l2_unknown_unicast: flood
+    arp_flooding: yes
+    endpoint_clear: yes
+    vrf: "{{ tenant_name|upper }}-DEFAULT"
+    state: present
+  loop: "{{ l2vlans.dict | dict2items }}"
+
+- name: Add L2 EPGs
+  aci_epg:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    tenant: "{{ tenant_name }}"
+    ap: L2-LEGACY
+    epg: "{{ item.value.vlanid }}-{{ item.value.vlanname }}"
+    description: EPG migrated from L2 vlan {{ item.value.vlanid }}
+    bd: "{{ item.value.vlanid }}-{{ item.value.vlanname }}"
+    state: present
+  loop: "{{ l2vlans.dict | dict2items }}"
+
+- name: Add BDs for L3 EPGs on default VRF
+  aci_bd:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    tenant: "{{ tenant_name }}"
+    bd: "{{ item.value.vlanid }}-{{ item.value.vlanname }}"
+    enable_routing: yes
+    endpoint_move_detect: garp
+    l2_unknown_unicast: flood
+    arp_flooding: yes
+    endpoint_clear: yes
+    vrf: "{{ tenant_name|upper }}-DEFAULT"
+    state: present
+  loop: "{{ l3vlans.dict | dict2items }}"
+  when: item.value.vrf == "default"
+
+- name: Add BDs for L3 EPGs on non-default VRF
+  aci_bd:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    tenant: "{{ tenant_name }}"
+    bd: "{{ item.value.vlanid }}-{{ item.value.vlanname }}"
+    enable_routing: yes
+    endpoint_move_detect: garp
+    l2_unknown_unicast: flood
+    arp_flooding: yes
+    endpoint_clear: yes
+    vrf: "{{ item.value.vrf }}"
+    state: present
+  loop: "{{ l3vlans.dict | dict2items }}"
+  when: item.value.vrf != "default"
+
+- name: Create Subnets for L3 EPGs
+  aci_bd_subnet:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    tenant: "{{ tenant_name }}"
+    bd: "{{ item.value.vlanid }}-{{ item.value.vlanname }}"
+    gateway: "{{ item.value.dg }}"
+    mask: "{{ item.value.mask }}"
+    preferred: yes
+    state: present
+  loop: "{{ l3vlans.dict | dict2items }}"
+
+- name: Add L3 EPGs
+  aci_epg:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    tenant: "{{ tenant_name }}"
+    ap: L3-LEGACY
+    epg: "{{ item.value.vlanid }}-{{ item.value.vlanname }}"
+    description: EPG migrated from L3 vlan {{ item.value.vlanid }}
+    bd: "{{ item.value.vlanid }}-{{ item.value.vlanname }}"
+    state: present
+  loop: "{{ l3vlans.dict | dict2items }}"
+
+- name: Associate physical domain to L2 EPG 
+  aci_epg_to_domain:
+    host: "{{ inventory_hostname}}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    tenant: "{{ tenant_name }}"
+    ap: L2-LEGACY
+    epg: "{{ item.value.vlanid }}-{{ item.value.vlanname }}"
+    domain: "{{ tenant_phydom_name }}"
+    domain_type: phys
+    state: present
+  loop: "{{ l2vlans.dict | dict2items }}"
+
+- name: Associate physical domain to L3 EPG 
+  aci_epg_to_domain:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    tenant: "{{ tenant_name }}"
+    ap: L3-LEGACY
+    epg: "{{ item.value.vlanid }}-{{ item.value.vlanname }}"
+    domain: "{{ tenant_phydom_name }}"
+    domain_type: phys
+    state: present
+  loop: "{{ l3vlans.dict | dict2items }}"

@@ -1,0 +1,28 @@
+  # Add VPC explicit protection group to playbook
+  # Modules to implement
+  # aci_aep
+  # aci_aep_to_domain
+  # aci_domain
+  # aci_vlan_pool
+  # aci_vlan_pool_encap_block
+  # aci_vrf
+  # aci_switch_policy_vpc_protection_group
+  # aci_ap
+  # aci_bd
+  # aci_bd_subnet
+  # aci_domain
+  # aci_domain_to_vlan_pool
+  # aci_encap_pool
+  # aci_encap_pool_range
+  # aci_rest
+    DNS, Global Policies, Route Reflectors, etc.
+# globals:
+    MCP: Fabric > Access Policies > Global Policies > MCP Instance Policy default
+    Remote EP learn: System > System Settings > Fabric Wide Setting
+    Enforce subnet:  System > System Settings > Fabric Wide Setting
+    IP Aging: System > System Settings > Endpoint Control > IP Aging (look to the right for this tab)
+    System > System Settings > Endpoint Controls > Rogue EP Control
+Recommended Values:
+Rogue EP Detection Interval = 30
+Rogue EP Detection Multiplication Factor = 6
+

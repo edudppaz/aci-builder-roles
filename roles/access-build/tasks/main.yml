@@ -1,0 +1,79 @@
+---
+# tasks file for access-build
+- name: Add leaf profiles
+  aci_switch_policy_leaf_profile:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    leaf_profile: EP-LEAFP-{{ item }}
+    description: Test Ansible Playbook
+    state: present
+  loop: "{{ leafs | union(vpcs) }}"
+
+- name: Add leaf selectors for single leafs
+  aci_switch_leaf_selector:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    leaf_profile: EP-LEAFP-{{ item }}
+    leaf: EP-LEAFSEL-{{ item }}
+    leaf_node_blk: "{{ item }}-BLOCK"
+    from: "{{ item }}"
+    to: "{{ item }}"
+    state: present
+  loop: "{{ leafs }}"
+
+- name: Add leaf selectors for VPC pairs
+  aci_switch_leaf_selector:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    leaf_profile: EP-LEAFP-{{ item }}
+    leaf: EP-LEAFSEL-{{ item }}
+    leaf_node_blk: "{{ item }}-BLOCK"
+    from: '{{ item | regex_search(".+?(?=\-)") }}'
+    to: '{{ item | regex_search("(?<=-).*$") }}'
+    state: present
+  loop: "{{ vpcs }}"
+
+- name: Add a new leaf_interface_profile
+  aci_interface_policy_leaf_profile:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    leaf_interface_profile: EP-IFSEL-{{ item }}
+    description:  Ansible test
+    state: present
+  loop: "{{ leafs | union(vpcs) }}"
+
+- name: Add interface selector profile
+  aci_interface_selector_to_switch_policy_leaf_profile:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    leaf_profile: EP-LEAFP-{{ item }}
+    interface_selector: EP-IFSEL-{{ item }}
+    state: present
+  loop: "{{ leafs | union(vpcs) }}"
+
+# Create AEP
+
+- name: Add a new AEP
+  aci_aep:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    aep: "{{ tenant_aep_name }}"
+    description: default
+    state: present
+  
+# Create Phydom
+
+- name: Add a new physical domain
+  aci_domain:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    domain: "{{ tenant_phydom_name }}"
+    domain_type: phys
+    state: present
