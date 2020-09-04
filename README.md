@@ -1,3 +1,5 @@
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)  ![Ansilble Lint](https://github.com/edudppaz/aci-builder-roles/workflows/Ansible%20Lint/badge.svg)
+
 aci-fabric-playbook
 =========
 
