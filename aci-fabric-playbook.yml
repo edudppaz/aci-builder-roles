@@ -1,5 +1,5 @@
 ---
-- name: ACI Playbook   
+- name: ACI Playbook
   hosts: apic
   connection: local
   gather_facts: no
