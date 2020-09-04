@@ -1,5 +1,5 @@
 ---
-- name: ACI Playbook 
+- name: ACI Playbook
   hosts: apic
   connection: local
   gather_facts: no
@@ -7,7 +7,7 @@
     - vars/topology.yml
     - vars/tenant-info.yml
   roles:
-    - access-build
-    - tenant-build
-    - net-migration
-    - best-practices-check
+    - access_build
+    - tenant_build
+    - net_migration
+    - best_practices_check

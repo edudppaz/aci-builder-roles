@@ -4,14 +4,14 @@
 
 - name: Read L2 Vlans from CSV file
   read_csv:
-    path: roles/net-migration/files/l2-vlans.csv
+    path: roles/net_migration/files/l2-vlans.csv
     key: vlanid
     delimiter: ','
   register: l2vlans
 
 - name: Read L3 Vlans from CSV file
   read_csv:
-    path: roles/net-migration/files/l3-vlans.csv
+    path: roles/net_migration/files/l3-vlans.csv
     key: vlanid
     delimiter: ','
   register: l3vlans
@@ -63,7 +63,7 @@
     hostname: "{{ inventory_hostname }}"
     username: "{{ username }}"
     password: "{{ password }}"
-    vrf: "{{ item.value.vrf }}"
+    vrf: "{{ item.value.vrf }}"
     tenant: "{{ tenant_name }}"
     descr: "{{ item.value.vrf }} VRF for tenant {{ tenant_name }}"
     policy_control_preference: enforced
@@ -71,7 +71,7 @@
     state: present
   loop: "{{ l3vlans.dict | dict2items }}"
   when: item.value.vrf != "default"
-      
+
 - name: Add BDs for L2 EPGs
   aci_bd:
     host: "{{ inventory_hostname }}"
@@ -161,9 +161,9 @@
     state: present
   loop: "{{ l3vlans.dict | dict2items }}"
 
-- name: Associate physical domain to L2 EPG 
+- name: Associate physical domain to L2 EPG
   aci_epg_to_domain:
-    host: "{{ inventory_hostname}}"
+    host: "{{ inventory_hostname }}"
     username: "{{ username }}"
     password: "{{ password }}"
     tenant: "{{ tenant_name }}"
@@ -174,7 +174,7 @@
     state: present
   loop: "{{ l2vlans.dict | dict2items }}"
 
-- name: Associate physical domain to L3 EPG 
+- name: Associate physical domain to L3 EPG
   aci_epg_to_domain:
     host: "{{ inventory_hostname }}"
     username: "{{ username }}"
