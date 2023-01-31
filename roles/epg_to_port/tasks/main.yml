@@ -1,0 +1,26 @@
+---
+# tasks file for access-build
+- name: Read L2 Vlans from CSV file
+  read_csv:
+    path: roles/net_migration/files/l2-vlans.csv
+    key: vlanid
+    delimiter: ','
+  register: l2vlans
+
+- name: EPG to Port
+  cisco.aci.aci_static_binding_to_epg:
+    host: "{{ inventory_hostname }}"
+    username: "{{ username }}"
+    password: "{{ password }}"
+    tenant: "{{ tenant_name }}"
+    ap: L2-LEGACY
+    epg: "{{ item.value.vlanname }}"
+    encap_id: "{{ item.value.vlanid }}"
+    deploy_immediacy: lazy
+    interface_mode: trunk
+    pod_id: 1
+    leafs: 101
+    interface: '1/10'
+    state: present
+    validate_certs: false
+  loop: "{{ l2vlans.dict | dict2items }}"

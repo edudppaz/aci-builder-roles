@@ -6,6 +6,7 @@
     password: "{{ password }}"
     tenant: "{{ tenant_name }}"
     description: Tenant - {{ tenant_name }}
+    validate_certs: false
     state: present
 
 - name: Build default VRF for the tenant
@@ -19,3 +20,4 @@
      policy_control_preference: enforced
      policy_control_direction: ingress
      state: present
+     validate_certs: false

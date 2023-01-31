@@ -5,9 +5,10 @@
     host: "{{ inventory_hostname }}"
     username: "{{ username }}"
     password: "{{ password }}"
-    leaf_profile: EP-LEAFP-{{ item }}
+    leaf_profile: LEAFP-{{ item }}
     description: Test Ansible Playbook
     state: present
+    validate_certs: false
   loop: "{{ leafs | union(vpcs) }}"
 
 - name: Add leaf selectors for single leafs
@@ -15,12 +16,13 @@
     host: "{{ inventory_hostname }}"
     username: "{{ username }}"
     password: "{{ password }}"
-    leaf_profile: EP-LEAFP-{{ item }}
-    leaf: EP-LEAFSEL-{{ item }}
+    leaf_profile: LEAFP-{{ item }}
+    leaf: LEAFSEL-{{ item }}
     leaf_node_blk: "{{ item }}-BLOCK"
     from: "{{ item }}"
     to: "{{ item }}"
     state: present
+    validate_certs: false
   loop: "{{ leafs }}"
 
 - name: Add leaf selectors for VPC pairs
@@ -28,12 +30,13 @@
     host: "{{ inventory_hostname }}"
     username: "{{ username }}"
     password: "{{ password }}"
-    leaf_profile: EP-LEAFP-{{ item }}
-    leaf: EP-LEAFSEL-{{ item }}
+    leaf_profile: LEAFP-{{ item }}
+    leaf: LEAFSEL-{{ item }}
     leaf_node_blk: "{{ item }}-BLOCK"
     from: '{{ item | regex_search(".+?(?=\-)") }}'
     to: '{{ item | regex_search("(?<=-).*$") }}'
     state: present
+    validate_certs: false
   loop: "{{ vpcs }}"
 
 - name: Add a new leaf_interface_profile
@@ -41,9 +44,10 @@
     host: "{{ inventory_hostname }}"
     username: "{{ username }}"
     password: "{{ password }}"
-    leaf_interface_profile: EP-IFSEL-{{ item }}
+    leaf_interface_profile: IFSEL-{{ item }}
     description:  Ansible test
     state: present
+    validate_certs: false
   loop: "{{ leafs | union(vpcs) }}"
 
 - name: Add interface selector profile
@@ -51,9 +55,10 @@
     host: "{{ inventory_hostname }}"
     username: "{{ username }}"
     password: "{{ password }}"
-    leaf_profile: EP-LEAFP-{{ item }}
-    interface_selector: EP-IFSEL-{{ item }}
+    leaf_profile: LEAFP-{{ item }}
+    interface_selector: IFSEL-{{ item }}
     state: present
+    validate_certs: false
   loop: "{{ leafs | union(vpcs) }}"
 
 # Create AEP
@@ -66,6 +71,7 @@
     aep: "{{ tenant_aep_name }}"
     description: default
     state: present
+    validate_certs: false
 
 # Create Phydom
 
@@ -77,3 +83,4 @@
     domain: "{{ tenant_phydom_name }}"
     domain_type: phys
     state: present
+    validate_certs: false
